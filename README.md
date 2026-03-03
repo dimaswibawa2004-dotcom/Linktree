@@ -1,10 +1,14 @@
 # Linktree Clone — kolosal.ai
 
-A pixel-close static clone of [linktr.ee/kolosal.ai](https://linktr.ee/kolosal.ai) built with pure **HTML**, **CSS**, and **JavaScript**. No frameworks, no build tools — just open `index.html` in a browser.
+[![Deploy to GitHub Pages](https://github.com/dimaswibawa2004-dotcom/Linktree/actions/workflows/deploy.yml/badge.svg)](https://github.com/dimaswibawa2004-dotcom/Linktree/actions/workflows/deploy.yml)
 
-## Live Preview
+A pixel-close static clone of [linktr.ee/kolosal.ai](https://linktr.ee/kolosal.ai) built with pure **HTML**, **CSS**, and **JavaScript**. Auto-deploys to GitHub Pages on every push via GitHub Actions.
 
-> Host on GitHub Pages: `Settings → Pages → Deploy from branch → main / root`
+## Live Site
+
+**[https://dimaswibawa2004-dotcom.github.io/Linktree/](https://dimaswibawa2004-dotcom.github.io/Linktree/)**
+
+> To enable: **Settings → Pages → Source → GitHub Actions**
 
 ---
 
@@ -12,11 +16,14 @@ A pixel-close static clone of [linktr.ee/kolosal.ai](https://linktr.ee/kolosal.a
 
 ```
 LINKTREE/
-├── index.html     ← Page markup & links
-├── styles.css     ← All styling (colors, layout, animations)
-├── script.js      ← Ripple effect & entrance animations
-├── PLAN.md        ← Step-by-step build explanation
-└── README.md      ← This file
+├── .github/
+│   └── workflows/
+│       └── deploy.yml  ← GitHub Actions: validate + deploy to Pages
+├── index.html          ← Page markup & 10 links
+├── styles.css          ← Black theme, buttons, animations
+├── script.js           ← Ripple effect & entrance animations
+├── PLAN.md             ← Step-by-step build explanation
+└── README.md           ← This file
 ```
 
 ---
@@ -30,6 +37,41 @@ LINKTREE/
 - **Ripple click effect** — Material-style tactile feedback
 - **Responsive** — works on mobile and desktop
 - **Accessible** — semantic HTML, `aria-label` on icon links, `alt` on images
+
+---
+
+## GitHub Actions Workflow
+
+Every push to `main` triggers a two-job pipeline:
+
+```
+push to main
+    │
+    ▼
+┌─────────────┐       fail → blocked
+│  validate   │ ────────────────────►  (deploy is skipped)
+│             │
+│ • files OK  │
+│ • HTML OK   │
+│ • 10 links  │
+└──────┬──────┘
+       │ pass
+       ▼
+┌─────────────┐
+│   deploy    │
+│             │
+│ configure   │
+│ upload      │
+│ deploy      │──────────► GitHub Pages (live URL printed)
+└─────────────┘
+```
+
+| Job | Steps | Purpose |
+|---|---|---|
+| `validate` | Check files, HTML, link count | CI gate — block bad deploys |
+| `deploy` | checkout → configure → upload → deploy | Publish to GitHub Pages |
+
+**Triggers:** push to `main` · manual via `workflow_dispatch`
 
 ---
 
@@ -67,27 +109,26 @@ LINKTREE/
 
 ## How to Run Locally
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/dimaswibawa2004-dotcom/Linktree.git
-   cd Linktree
-   ```
-2. Open `index.html` in any browser — no server needed.
+```bash
+git clone https://github.com/dimaswibawa2004-dotcom/Linktree.git
+cd Linktree
+# open index.html in browser — no server or build step needed
+```
 
 ---
 
-## How to Deploy (GitHub Pages)
+## Enable GitHub Pages Deployment
 
-1. Push all files to the `main` branch
+1. Push all files to `main`
 2. Go to **Settings → Pages**
-3. Set source to **Deploy from a branch → main → / (root)**
-4. Your site will be live at `https://dimaswibawa2004-dotcom.github.io/Linktree/`
+3. Set **Source** to **GitHub Actions**
+4. The workflow runs automatically — live URL appears in the Actions log
 
 ---
 
 ## See the Plan
 
-Read [`PLAN.md`](./PLAN.md) for a detailed step-by-step explanation of how this clone was built.
+Read [`PLAN.md`](./PLAN.md) for a complete step-by-step explanation of how this was built, including the GitHub Actions workflow design.
 
 ---
 

@@ -157,6 +157,69 @@ git push origin main
 
 ---
 
+## Step 9: Set Up GitHub Actions Workflow
+
+Automate deployment to GitHub Pages on every push to `main`.
+
+### 9.1 Create the workflow file
+
+```
+.github/
+└── workflows/
+    └── deploy.yml
+```
+
+### 9.2 Workflow structure
+
+The workflow has **two jobs**:
+
+#### Job 1 — `validate`
+Runs on every push before deploying. Checks:
+- All required files exist (`index.html`, `styles.css`, `script.js`, `PLAN.md`, `README.md`)
+- `index.html` has correct DOCTYPE, viewport meta, and links to CSS/JS
+- At least 10 `.link-btn` elements are present
+
+If any check fails → the deploy job is **blocked**.
+
+#### Job 2 — `deploy`
+Runs only after `validate` passes (`needs: validate`):
+1. `actions/checkout@v4` — pull repo code
+2. `actions/configure-pages@v5` — set up Pages environment
+3. `actions/upload-pages-artifact@v3` — bundle entire root dir as artifact
+4. `actions/deploy-pages@v4` — push artifact to GitHub Pages CDN
+5. Print the live URL in the workflow log
+
+### 9.3 Required GitHub Pages permissions
+
+The workflow needs these `permissions` in the YAML:
+```yaml
+permissions:
+  contents: read   # read repo files
+  pages: write     # deploy to Pages
+  id-token: write  # OIDC token for Pages authentication
+```
+
+### 9.4 Enable GitHub Pages in repository settings
+
+1. Go to **Settings → Pages**
+2. Set **Source** to `GitHub Actions`
+3. Save — the next push to `main` will trigger the workflow
+
+### 9.5 Concurrency control
+
+```yaml
+concurrency:
+  group: pages
+  cancel-in-progress: false
+```
+Prevents two deployments from running simultaneously. Queued runs are skipped but the active deploy is never cancelled.
+
+### 9.6 Manual trigger
+
+The workflow also supports `workflow_dispatch` so you can re-deploy manually from the **Actions** tab without pushing code.
+
+---
+
 ## Key Techniques Used
 
 | Technique | Purpose |
@@ -169,6 +232,10 @@ git push origin main
 | `target="_blank"` + `rel="noopener"` | Secure external link handling |
 | CSS `transform: scale()` | Subtle button hover lift effect |
 | JS Ripple Effect | Material-style click feedback |
+| GitHub Actions | Automate validation + deployment on every push |
+| `actions/deploy-pages` | Official GitHub action for Pages deployment |
+| Job `needs:` dependency | Ensure validation passes before deploying |
+| `workflow_dispatch` | Allow manual re-deploy without a code push |
 
 ---
 
@@ -178,4 +245,5 @@ A pixel-close static clone of [linktr.ee/kolosal.ai](https://linktr.ee/kolosal.a
 - Loads instantly (no framework, no build step)
 - Works on all screen sizes
 - Has smooth hover and click animations
-- Can be hosted on GitHub Pages for free
+- Auto-deploys to GitHub Pages on every push via GitHub Actions
+- Validates all files before deploying (CI gate)
