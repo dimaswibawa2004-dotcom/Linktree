@@ -1,0 +1,181 @@
+# Plan: Clone Linktree (kolosal.ai) to HTML, CSS & JavaScript
+
+## Overview
+This document explains step-by-step how the [linktr.ee/kolosal.ai](https://linktr.ee/kolosal.ai) page was cloned into a static HTML, CSS, and JavaScript project.
+
+---
+
+## Step 1: Analyze the Original Page
+
+Before writing any code, inspect the original Linktree page to collect:
+
+| Element | Value |
+|---|---|
+| Profile Name | OperationalKolosal |
+| Username | @kolosal.ai |
+| Background Color | `#000000` (pure black) |
+| Button Background | `#141414` (dark gray) |
+| Text Color | `#f5f6f7` (light gray) |
+| Accent Color | `#ffffff` (white) |
+| Primary Font | Epilogue |
+| Secondary Font | Inter |
+| Button Border Radius | 16px |
+| Layout | Centered vertical stack |
+
+**Tools used:** Browser DevTools (Inspect Element), WebFetch
+
+---
+
+## Step 2: Set Up the Project Structure
+
+Create the following file structure:
+
+```
+LINKTREE/
+├── index.html       ← Main page markup
+├── styles.css       ← All visual styling
+├── script.js        ← Interactivity (hover, click, animations)
+├── PLAN.md          ← This file
+└── README.md        ← Project documentation
+```
+
+---
+
+## Step 3: Build `index.html`
+
+The HTML structure mirrors the Linktree layout:
+
+1. **`<head>`** — Load Google Fonts (Epilogue + Inter), link `styles.css`
+2. **Profile Section**
+   - Circular avatar image (`.avatar`)
+   - Profile name (`<h1>`)
+   - Username (`<p class="username">`)
+3. **Links Section**
+   - 10 `<a>` tags styled as buttons, each linking to the real URL
+   - Each button uses `target="_blank"` and `rel="noopener noreferrer"` for security
+4. **Social Icons Section**
+   - LinkedIn icon/link using SVG
+5. **Footer** — Linktree branding reference
+6. **`<script src="script.js">`** — Load JS at the bottom
+
+---
+
+## Step 4: Build `styles.css`
+
+CSS is organized in this order:
+
+### 4.1 CSS Reset & Variables
+```css
+:root {
+  --bg: #000000;
+  --btn-bg: #141414;
+  --text: #f5f6f7;
+  --accent: #ffffff;
+  --radius: 16px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+```
+
+### 4.2 Body & Layout
+- `background: var(--bg)` — black background
+- `font-family: 'Epilogue', sans-serif`
+- Centered `.container` with `max-width: 680px`
+- Flexbox column layout
+
+### 4.3 Profile Section
+- `.avatar` — circular image with `border-radius: 50%`
+- `.profile-name` — bold white text, 24px
+- `.username` — lighter gray, 14px
+
+### 4.4 Link Buttons
+- `display: block` full-width buttons
+- `background: var(--btn-bg)` dark gray
+- `border-radius: var(--radius)` 16px rounded corners
+- `padding: 16px 24px`
+- `color: var(--text)` light text
+- `transition: all 0.2s ease` for hover animation
+
+### 4.5 Hover States
+- Button hover: slightly lighter background (`#1e1e1e`), slight scale up (`transform: scale(1.02)`)
+- Social icon hover: white color
+
+### 4.6 Responsive Design
+- Mobile breakpoint at `480px`
+- Reduce padding and font sizes for small screens
+
+---
+
+## Step 5: Build `script.js`
+
+JavaScript adds light interactivity:
+
+1. **Ripple effect** — On button click, show a ripple animation expanding from the click point
+2. **Smooth entrance animation** — Cards fade in with a stagger delay when the page loads
+3. **Active state** — Brief color flash on button press to confirm the click
+
+---
+
+## Step 6: Collect All Link Data
+
+All 10 links from the original page:
+
+| # | Label | URL |
+|---|---|---|
+| 1 | Tax Planning Dashboard | https://kolosalai-ops.github.io/tax-planning/dashboard/countries/SG |
+| 2 | Kolosal Math — High School to Advanced Calculus | https://kolosalai-ops.github.io/maths-calculus/#ch-number-systems |
+| 3 | CA Prep Indonesia | https://kolosalai-ops.github.io/cpa-prep |
+| 4 | Kolosal Finance - CFO Dashboard | http://kolosal-finance-production.up.railway.app |
+| 5 | Kolosal Repo Legal Document | https://github.com/KolosalAI/legal-docs |
+| 6 | Standard Legal Document | https://docs.google.com/document/d/16LCz5nEjVxpS2RCICmP8zcuoWo0trzQnjHIVzl9JhgU/edit?usp=drive_link |
+| 7 | Kolosal Legal - Legal Document Platform | http://kolosal-legal-production.up.railway.app |
+| 8 | Finance Directory | https://drive.google.com/drive/folders/19FTUYfKuYRCfl1YqPs88sDwJU3hQuKlM |
+| 9 | Spreadsheet | https://docs.google.com/spreadsheets/d/1iaUvaX-RsYPbOAC6JbLNmomEqoGuFhkKdY2GXt19QTs |
+| 10 | Google Meet | https://meet.google.com/ien-xtnu-czv |
+
+**Social Links:**
+- LinkedIn: https://www.linkedin.com/company/kolosal-ai/
+
+---
+
+## Step 7: Test the Page
+
+1. Open `index.html` in a browser (double-click or use Live Server in VS Code)
+2. Check all 10 links open correctly in a new tab
+3. Test hover animations on buttons
+4. Test on mobile screen size (DevTools → Toggle Device Toolbar)
+5. Verify fonts load correctly (requires internet connection for Google Fonts)
+
+---
+
+## Step 8: Push to GitHub
+
+```bash
+git add .
+git commit -m "feat: add Linktree clone (HTML, CSS, JS)"
+git push origin main
+```
+
+---
+
+## Key Techniques Used
+
+| Technique | Purpose |
+|---|---|
+| CSS Custom Properties | Centralize colors and sizes for easy theming |
+| Google Fonts API | Load Epilogue + Inter without installing fonts |
+| Flexbox | Center and stack layout elements |
+| CSS Transitions | Smooth hover and click animations |
+| JS IntersectionObserver | Trigger entrance animations when elements scroll into view |
+| `target="_blank"` + `rel="noopener"` | Secure external link handling |
+| CSS `transform: scale()` | Subtle button hover lift effect |
+| JS Ripple Effect | Material-style click feedback |
+
+---
+
+## Result
+
+A pixel-close static clone of [linktr.ee/kolosal.ai](https://linktr.ee/kolosal.ai) that:
+- Loads instantly (no framework, no build step)
+- Works on all screen sizes
+- Has smooth hover and click animations
+- Can be hosted on GitHub Pages for free
