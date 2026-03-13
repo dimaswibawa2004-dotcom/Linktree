@@ -43,6 +43,8 @@ const ICONS = {
     `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`,
   catOther:
     `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+  catUncategorized:
+    `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>`,
   pencil:
     `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
   clipboard:
@@ -52,13 +54,14 @@ const ICONS = {
 };
 
 /* ── Category metadata ──────────────────────────────────────────────── */
-const CATEGORY_ORDER = ['Finance', 'Legal', 'Education', 'Workspace', 'Other'];
+const CATEGORY_ORDER = ['Finance', 'Legal', 'Education', 'Workspace', 'Other', 'Uncategorized'];
 const CAT_META = {
-  Finance:   { label: 'Finance',   icon: ICONS.catFinance },
-  Legal:     { label: 'Legal',     icon: ICONS.catLegal },
-  Education: { label: 'Education', icon: ICONS.catEducation },
-  Workspace: { label: 'Workspace', icon: ICONS.catWorkspace },
-  Other:     { label: 'Other',     icon: ICONS.catOther },
+  Finance:       { label: 'Finance',       icon: ICONS.catFinance },
+  Legal:         { label: 'Legal',         icon: ICONS.catLegal },
+  Education:     { label: 'Education',     icon: ICONS.catEducation },
+  Workspace:     { label: 'Workspace',     icon: ICONS.catWorkspace },
+  Other:         { label: 'Other',         icon: ICONS.catOther },
+  Uncategorized: { label: 'Uncategorized', icon: ICONS.catUncategorized },
 };
 
 /* ── Default links ──────────────────────────────────────────────────── */
@@ -76,8 +79,9 @@ const DEFAULTS = [
 ];
 
 /* ── Storage ────────────────────────────────────────────────────────── */
-const LS_KEY     = 'kolosal_links';
-const CLICKS_KEY = 'kolosal_clicks';
+const LS_KEY        = 'kolosal_links';
+const CLICKS_KEY    = 'kolosal_clicks';
+const DISMISSED_KEY = 'kolosal_dismissed_auto';
 
 function getLinks() {
   try {
@@ -104,6 +108,17 @@ function getClicks() {
 
 function saveClicks(c) {
   localStorage.setItem(CLICKS_KEY, JSON.stringify(c));
+}
+
+function getDismissed() {
+  try { return new Set(JSON.parse(localStorage.getItem(DISMISSED_KEY)) || []); }
+  catch { return new Set(); }
+}
+
+function addDismissed(id) {
+  const d = getDismissed();
+  d.add(id);
+  localStorage.setItem(DISMISSED_KEY, JSON.stringify([...d]));
 }
 
 /* ── Module state ───────────────────────────────────────────────────── */
@@ -230,6 +245,7 @@ function renderLinks(links) {
 
 /* ── Delete ─────────────────────────────────────────────────────────── */
 function deleteLink(id) {
+  if (id.startsWith('auto-')) addDismissed(id);
   const links = loadLinks().filter(l => l.id !== id);
   saveLinks(links);
   renderLinks(links);
@@ -617,10 +633,66 @@ function initDragDrop() {
   });
 }
 
+/* ── GitHub Pages auto-detect ───────────────────────────────────────── */
+async function checkGitHubPages() {
+  try {
+    const res = await fetch('https://api.github.com/orgs/kolosalai-ops/repos?per_page=100&type=public');
+    if (!res.ok) return;
+    const repos = await res.json();
+    if (!Array.isArray(repos)) return;
+
+    const links     = loadLinks();
+    const dismissed = getDismissed();
+
+    // Collect first path segments already covered by existing links
+    const covered = new Set();
+    for (const l of links) {
+      try {
+        const u = new URL(l.url);
+        if (u.hostname === 'kolosalai-ops.github.io') {
+          const seg = u.pathname.split('/').filter(Boolean)[0];
+          if (seg) covered.add(seg.toLowerCase());
+        }
+      } catch { /* ignore invalid URLs */ }
+    }
+
+    const toAdd = [];
+    for (const repo of repos) {
+      if (!repo.has_pages) continue;
+      const name   = repo.name.toLowerCase();
+      const autoId = `auto-${repo.id}`;
+
+      // Skip: already covered by an existing link, dismissed by user, or this repo itself
+      if (covered.has(name))           continue;
+      if (dismissed.has(autoId))       continue;
+      if (name === 'linktree')         continue;
+      if (links.some(l => l.id === autoId)) continue;
+
+      const label = (repo.description && repo.description.trim())
+        ? repo.description.trim().slice(0, 60)
+        : repo.name.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+      toAdd.push({
+        id:       autoId,
+        label,
+        url:      `https://kolosalai-ops.github.io/${repo.name}`,
+        category: 'Uncategorized',
+        icon:     'github',
+      });
+    }
+
+    if (toAdd.length === 0) return;
+    const updated = [...links, ...toAdd];
+    saveLinks(updated);
+    renderLinks(updated);
+  } catch { /* silently fail — network errors shouldn't break the page */ }
+}
+
 /* ── Init ───────────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   initModal();           // must run first — defines openModal
   initSearch();
   initExportImport();
   renderLinks(loadLinks()); // calls initEditButtons which uses openModal
+  checkGitHubPages();   // async — adds live GitHub Pages sites to Uncategorized
 });
